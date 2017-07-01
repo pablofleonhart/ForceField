@@ -103,20 +103,22 @@ class AminoPhiPsi:
 		n_aa = len( self.pdb.aminoAcids )
 		print n_aa
 		if len( angles ) == 0:
+			print self.omega
 			angles = [math.pi]*n_aa
 			for i in xrange( n_aa ):
 				if i + min( self.pdb.aminoAcids ) < max( self.pdb.aminoAcids ):
 					#ROTATE OMEGA
 					#print 'i',i, self.dicContent.get( str( i ) )
 					c_i  = zip(self.pdb.atoms, self.pdb.aminoAcids).index((" C  ",  i + min(self.pdb.aminoAcids))) #C from aminoacid i		
-					nn_i = zip(self.pdb.atoms, self.pdb.aminoAcids).index((" N  ", i + 1 + min(self.pdb.aminoAcids))) #N from aminoacid i+1					
+					nn_i = zip(self.pdb.atoms, self.pdb.aminoAcids).index((" N  ", i + 1 + min(self.pdb.aminoAcids))) #N from aminoacid i+1
+					#print c_i, nn_i
 					current_omegas = self.omega
 					domega = math.atan2( math.sin( angles[i] - current_omegas[i]), math.cos(angles[i] - current_omegas[i]))
-					#print "domega", domega
+					print "domega", domega
 					c_pos  = self.pdb.posAtoms[c_i]
 					nn_pos = self.pdb.posAtoms[nn_i]
-					#print "c_i", c_i, c_pos
-					#print "nn_i", nn_i, nn_pos
+					print "c_i", c_i, c_pos
+					print "nn_i", nn_i, nn_pos
 					ia = 0
 					for atom in zip(self.pdb.atoms, self.pdb.aminoAcids):
 						if (atom[1] > i + 1 + min(self.pdb.aminoAcids) or (atom[1] == i + 1 + min(self.pdb.aminoAcids) and (atom[0] != " N  "))): 
