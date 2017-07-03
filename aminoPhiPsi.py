@@ -60,15 +60,15 @@ class AminoPhiPsi:
 
 			if i > 0:
 				phiValue = self.calcDihedralAngle( self.pdb.dicContent.get( str( i-1 ) ).getPosC(), self.pdb.dicContent.get( str( i ) ).getPosN(), self.pdb.dicContent.get( str( i ) ).getPosCA(), self.pdb.dicContent.get( str( i ) ).getPosC() )
+				omegaValue = self.calcDihedralAngle( self.pdb.dicContent.get( str( i-1 ) ).getPosCA(), self.pdb.dicContent.get( str( i-1 ) ).getPosC(), self.pdb.dicContent.get( str( i ) ).getPosN(), self.pdb.dicContent.get( str( i ) ).getPosCA() )
 			if i < len( self.pdb.dicContent )-1:
-				psiValue = self.calcDihedralAngle( self.pdb.dicContent.get( str( i ) ).getPosN(), self.pdb.dicContent.get( str( i ) ).getPosCA(), self.pdb.dicContent.get( str( i ) ).getPosC(), self.pdb.dicContent.get( str( i+1 ) ).getPosN() )
-				omegaValue = self.calcDihedralAngle( self.pdb.dicContent.get( str( i ) ).getPosCA(), self.pdb.dicContent.get( str( i ) ).getPosC(), self.pdb.dicContent.get( str( i+1 ) ).getPosN(), self.pdb.dicContent.get( str( i+1 ) ).getPosCA() )
+				psiValue = self.calcDihedralAngle( self.pdb.dicContent.get( str( i ) ).getPosN(), self.pdb.dicContent.get( str( i ) ).getPosCA(), self.pdb.dicContent.get( str( i ) ).getPosC(), self.pdb.dicContent.get( str( i+1 ) ).getPosN() )				
 
 			self.phi.append( phiValue )
 			self.psi.append( psiValue )
 			self.angles.append( self.rad( phiValue ) )
 			self.angles.append( self.rad( psiValue ) )
-			self.omega.append( omegaValue )
+			self.omega.append( self.rad( omegaValue ) )
 
 			file.write( "{:5s}  {:7.2f}  {:7.2f}  {:7.2f}".format( self.pdb.dicContent.get( str( i ) ).getAminoAcid(), phiValue, psiValue, omegaValue ) + "\n" )
 
@@ -113,7 +113,7 @@ class AminoPhiPsi:
 					nn_i = zip(self.pdb.atoms, self.pdb.aminoAcids).index((" N  ", i + 1 + min(self.pdb.aminoAcids))) #N from aminoacid i+1
 					#print c_i, nn_i
 					current_omegas = self.omega
-					domega = math.atan2( math.sin( angles[i] - current_omegas[i]), math.cos(angles[i] - current_omegas[i]))
+					domega = math.atan2( math.sin( angles[i] - current_omegas[i+1]), math.cos(angles[i] - current_omegas[i+1]))
 					print "domega", domega
 					c_pos  = self.pdb.posAtoms[c_i]
 					nn_pos = self.pdb.posAtoms[nn_i]
@@ -121,7 +121,7 @@ class AminoPhiPsi:
 					print "nn_i", nn_i, nn_pos
 					ia = 0
 					for atom in zip(self.pdb.atoms, self.pdb.aminoAcids):
-						if (atom[1] > i + 1 + min(self.pdb.aminoAcids) or (atom[1] == i + 1 + min(self.pdb.aminoAcids) and (atom[0] != " N  "))): 
+						if (atom[1] > i + 1 + min(self.pdb.aminoAcids) or (atom[1] == i + 1 + min(self.pdb.aminoAcids) and (atom[0].strip() != "N"))): 
 							self.pdb.posAtoms[ia] = self.rotate_atom_around_bond(domega, self.pdb.posAtoms[ia], c_pos, nn_pos)
 							'''print self.pdb.atoms[ia], self.pdb.aAcids[ia], self.pdb.posAtoms[ia]
 							print i
@@ -204,12 +204,12 @@ class AminoPhiPsi:
 		n  = self.get_N_info()
 		c  = self.get_C_info()       
 		for aa in xrange(len(ca)):
-			if aa < len(ca) - 1:
-				name       = ca[aa][1]
-				ca_pos     = ca[aa][2]
-				c_pos      =  c[aa][2]                
-				nex_n_pos  =  n[aa+1][2]
-				nex_ca_pos = ca[aa+1][2]
+			if aa > 0:
+				name       = ca[aa-1][1]
+				ca_pos     = ca[aa-1][2]
+				c_pos      =  c[aa-1][2]                
+				nex_n_pos  =  n[aa][2]
+				nex_ca_pos = ca[aa][2]
 				omega = self.calcDihedralAngle(ca_pos, c_pos, nex_n_pos, nex_ca_pos)
 				angles.append(omega)
 			else:
