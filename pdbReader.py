@@ -3,7 +3,9 @@ from backbone import Backbone
 import copy
 
 class PDBReader:
-	ALPHA_CARBON = "CA"
+	ALPHA_TAG = " CA "
+	CARBON_TAG = " C  "
+	NITROGEN_TAG = " N  "
 	BACKBONE_ATOMS = ( "N", "CA", "C", "O" )
 	ATOM_TAG = "ATOM"
 	END_TAG = "TER"
@@ -21,14 +23,6 @@ class PDBReader:
 	def __init__( self, fileName ):
 		self.fileName = fileName
 		self.readFile()
-
-	def isNumber( self, value ):
-		try:
-			int( value )
-			return True
-
-		except ValueError:
-			return False
 
 	def readFile( self ):
 		self.atoms = []
@@ -64,15 +58,15 @@ class PDBReader:
 					if atom.seqResidue != key:
 						if key > 0:
 							self.dicContent[str( index )] = None
-							self.dicContent[str( index )] = backbone
+							self.dicContent[str( index )] = backbone							
 							index += 1
 						key = atom.seqResidue
 						backbone = Backbone()
 
 					backbone.setPosAtom( atom.getAtom(), atom.getResidue(), atom.getPos() )
 
-			self.dicContent[str( index )] = None
-			self.dicContent[str( index )] = backbone
+		self.dicContent[str( index )] = None
+		self.dicContent[str( index )] = backbone
 
 		file.close()
 
@@ -107,5 +101,29 @@ class PDBReader:
 	def calcCaPos( self ):
 		self.alpha = []
 		for i in range( len( self.atoms ) ):
-			if self.atoms[i] == self.ALPHA_CARBON:
+			if self.atoms[i] == self.ALPHA_TAG:
 				self.alpha.append( self.posAtoms[i] )
+
+	def getCAInfo( self ):
+		CAInfo = []
+		for a in zip( self.atoms, self.aminoAcids, self.posAtoms ):
+			if a[0] == self.ALPHA_TAG:
+				CAInfo.append( a )
+
+		return copy.deepcopy( CAInfo )
+
+	def getNInfo( self ):
+		NInfo = []
+		for a in zip( self.atoms, self.aminoAcids, self.posAtoms ):
+			if a[0] == self.NITROGEN_TAG:
+				NInfo.append( a )
+
+		return copy.deepcopy( NInfo )
+
+	def getCInfo( self ):
+		CInfo = []
+		for a in zip( self.atoms, self.aminoAcids, self.posAtoms ):
+			if a[0] == self.CARBON_TAG:
+				CInfo.append( a )
+
+		return copy.deepcopy( CInfo ) 
