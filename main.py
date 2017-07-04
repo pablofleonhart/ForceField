@@ -45,10 +45,11 @@ class Builder( object ):
 			self.calcRMSD()
 			self.calcKabschRMSD()
 
+			print( len( self.experimental.atoms ), len( self.modified.atoms ) )
 			params = ['psi1', 'phi2', 'psi2', 'phi3', 'psi3', 'phi4', 'psi4', 'phi5', 'psi5', 'phi6', 'psi6', 'phi7', 'psi7', 'phi8',\
 					  'psi8', 'phi9', 'psi9', 'phi10', 'psi10', 'phi11', 'psi11', 'phi12', 'psi12', 'phi13', 'psi13', 'phi14', 'psi14',\
 					  'phi15', 'psi15', 'phi16', 'psi16', 'phi17', 'psi17', 'phi18', 'psi18', 'phi19', 'psi19', 'phi20']
-			acor = ACOR( self.experimental, self.modified, params, False, 10 )
+			acor = ACOR( self.experimental, self.modified, params, False, 1 )
 			acor.evolve()
 
 		else:
@@ -80,11 +81,11 @@ class Builder( object ):
 		print "{:15s} {:6.2f}".format( "Kabsch RMSD:", rmsd.kabsch_rmsd( P, Q ) )
 
 	def calcRMSD( self ):
-		print( len( self.experimental.atoms ), len( self.modified.atoms ) )
-		#print( self.experimental.atoms )
-		#print( self.modified.atoms )
+		'''print( len( self.experimental.atoms ), len( self.modified.atoms ) )
+		print( self.experimental.atoms )
+		print( self.modified.atoms )
 		print( len( self.experimental.backbone ), len( self.modified.backbone ) )
-		print( len( self.experimental.alpha ), len( self.modified.alpha ) )
+		print( len( self.experimental.alpha ), len( self.modified.alpha ) )'''
 
 		aligner = PDBAligner()
 		print "{:15s} {:6.2f}".format( "CA RMSD:", aligner.calcRMSD( self.experimental.alpha, self.modified.alpha ) )

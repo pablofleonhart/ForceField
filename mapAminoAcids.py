@@ -35,18 +35,106 @@ class AminoAcids( object ):
 			"Y": "files/tyrosine.pdb",
 			"V": "files/valine.pdb" }
 
-	dicNames = { "2H" : " H  ",
+	asnNames = { "H" : " H2 ",
+				 "1HD2" : "HD21",
+				 "2HD2" : "HD22",
 				 "2HB" : " HB2",
 				 "1HB" : " HB3",
-				 "1H" : " H1 ",
-				 "2HA" : " HA2",
-				 "1HA" : " HA3",
-				 "OC" : " OXT",
+				 "2H" : " H2 ",
+				 "1H" : " H1 "}
+
+	leuNames = { "2H" : " H  ",
+				 "2HB" : " HB2",
+				 "1HB" : " HB3",
+				 "1HD1" : "HD11",
+				 "2HD1" : "HD12",
+				 "3HD1" : "HD13",
+				 "1HD2" : "HD21",
+				 "2HD2" : "HD22",
+				 "3HD2" : "HD23" }
+
+	tyrNames = { "2H" : " H  ",
+				 "2HB" : " HB2",
+				 "1HB" : " HB3" }
+
+	ileNames = { "2H" : " H  ",
+				 "1HG1" : "HG13",
+				 "2HG1" : "HG12",
+				 "1HG2" : "HG21",
+				 "2HG2" : "HG22",
+				 "3HG2" : "HG23",
+				 "1HD1" : "HD11",
+				 "2HD1" : "HD12",
+				 "3HD1" : "HD13" }
+
+	glnNames = { "2H" : " H  ",
+			     "2HB" : " HB2",
+				 "1HB" : " HB3",
 				 "2HG" : " HG2",
 				 "1HG" : " HG3",
-				 "1HE" : " HE1",
+				 "1HE2" : "HE21",
+				 "2HE2" : "HE22" }
+
+	trpNames = { "2H" : " H  ",
+			     "2HB" : " HB2",
+				 "1HB" : " HB3" }
+
+	lysNames = { "2HB" : " HB2",
+				 "1HB" : " HB3",
+				 "2HG" : " HG2",
+				 "1HG" : " HG3",
+				 "2HD" : " HD2",
+				 "1HD" : " HD3",
 				 "2HE" : " HE2",
-				 "3HE" : " HE3" }
+				 "1HE" : " HE3",
+				 "1HZ" : " HZ1",
+				 "2HZ" : " HZ2",
+				 "3HZ" : " HZ3" }
+
+	aspNames = { "2H" : " H  ",
+			     "2HB" : " HB2",
+				 "1HB" : " HB3" }
+
+	glyNames = { "2H" : " H  ",
+			     "2HA" : " HA2",
+				 "1HA" : " HA3" }
+
+	proNames = { "2HB" : " HB2",
+				 "1HB" : " HB3",
+				 "2HG" : " HG2",
+				 "1HG" : " HG3",
+				 "2HD" : " HD2",
+				 "1HD" : " HD3" }
+
+	serNames = { "2H" : " H  ",
+			     "2HB" : " HB2",
+				 "1HB" : " HB3",
+				 "OC" : " OXT" }
+
+	argNames = { "2H" : " H  ",
+				 "2HB" : " HB2",
+				 "1HB" : " HB3",
+				 "2HG" : " HG2",
+				 "1HG" : " HG3",
+				 "2HD" : " HD2",
+				 "1HD" : " HD3",
+				 "1HH1" : "HH11",
+				 "2HH1" : "HH12",
+				 "1HH2" : "HH21",
+				 "2HH2" : "HH22" }
+
+	dicNames = { "ASN" : asnNames,
+				 "LEU" : leuNames,
+				 "TYR" : tyrNames,
+				 "ILE" : ileNames,
+				 "GLN" : glnNames,
+				 "TRP" : trpNames,
+				 "LYS" : lysNames,
+				 "ASP" : aspNames,
+				 "GLY" : glyNames,
+				 "PRO" : proNames,
+				 "SER" : serNames,
+				 "ARG" : argNames }
 
 	def __init__( self, sequence, fileName ):
 		self.sequence = sequence
@@ -171,12 +259,16 @@ class AminoAcids( object ):
 		self.dicResults[str( key )] = []
 		self.dicResults[str( key )] = keyContentI
 
+		for z in range( 0, len( self.dicResults ) ):
+			key = str( z )
+			for y in range( 0, len( self.dicResults.get( key ) ) ):
+				self.dicResults.get( key )[y].atom = self.renameAtom( self.dicResults.get( key )[y].atom, self.dicResults.get( key )[y].residue )
+
 	def renameAtom( self, atom, amino ):
-		if amino == "TYR" and atom.strip() == "2H":
-			return " H2 "
-		else:			
-			if self.dicNames.get( atom.strip() ) is not None:
-				return self.dicNames.get( atom.strip() )
+		dicAmino = self.dicNames.get( amino )
+		if dicAmino is not None:
+			if dicAmino.get( atom.strip() ) is not None:
+				return dicAmino.get( atom.strip() )
 
 		return atom
 
@@ -188,9 +280,7 @@ class AminoAcids( object ):
 			key = str( z )
 			for y in range( 0, len( self.dicResults.get( key ) ) ):
 				self.dicResults.get( key )[y].serial = countTotal
-				self.dicResults.get( key )[y].seqResidue = z+1
-
-				self.dicResults.get( key )[y].atom = self.renameAtom( self.dicResults.get( key )[y].atom, self.dicResults.get( key )[y].residue )
+				self.dicResults.get( key )[y].seqResidue = z+1				
 
 				pdbNew.write( self.pdbPattern.format( self.dicResults.get( key )[y].tag, self.dicResults.get( key )[y].serial, self.dicResults.get( key )[y].atom, \
 							  self.dicResults.get( key )[y].locIndicator, self.dicResults.get( key )[y].residue, self.dicResults.get( key )[y].chainID, self.dicResults.get( key )[y].seqResidue, \

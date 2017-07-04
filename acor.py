@@ -56,58 +56,6 @@ class ACOR:
         self.upperBound = [1] * self.numVar
         self.lowerBound = [0] * self.numVar
 
-    def rotate_to( self, ang, atoms, aminoAcids, posAtoms ):
-        angles = [math.pi]*len( ang )
-        angles[0] = math.pi*2
-        angles[len( ang ) - 1] = math.pi*2
-        n_aa = len( aminoAcids )
-        for i in xrange(n_aa):
-            if i + min( aminoAcids) <= max(aminoAcids):
-                #ROTATE PHI
-                #print atoms, aminoAcids
-                n_i = zip(atoms, aminoAcids).index((" N  ", i + min(aminoAcids)))   
-                ca_i = zip(atoms, aminoAcids).index((" CA ", i + min(aminoAcids)))
-                current_angles = angles
-                #print current_angles
-                dphi = math.atan2(math.sin(ang[2*i] - current_angles[2*i]), math.cos(ang[2*i] - current_angles[2*i]))
-                #print "dphi", degrees( dphi )
-                n_pos = posAtoms[n_i]
-                ca_pos = posAtoms[ca_i]                
-                ia = 0
-                for atom in zip(atoms, aminoAcids):
-                    if (i > 0) and (atom[1] > i + min(aminoAcids) or (atom[1] == i + min(aminoAcids) and (atom[0].strip() not in self.NHC_ATOMS))): 
-                        posAtoms[ia] = self.rotate_atom_around_bond(dphi, posAtoms[ia], n_pos, ca_pos)
-                        #print(atom[0], atom[1])   
-                    ia += 1        
-                #ROTATE PSI    
-                c_i  = zip(atoms, aminoAcids).index((" C  ",  i + min(aminoAcids)))  
-                ca_i = zip(atoms, aminoAcids).index((" CA ", i + min(aminoAcids)))
-                current_angles = angles
-                #print current_angles
-                dpsi = math.atan2(math.sin(ang[2*i+1] - current_angles[2*i+1]), math.cos(ang[2*i+1] - current_angles[2*i+1]))              
-                c_pos = posAtoms[c_i] 
-                ca_pos = posAtoms[ca_i]
-                ia = 0
-                for atom in zip(atoms, aminoAcids):
-                    if (i+min(aminoAcids) < max(aminoAcids)) and (atom[1] > i+min(aminoAcids) or (atom[1] == i+min(aminoAcids) and (atom[0]==" O  "))): 
-                        posAtoms[ia] = self.rotate_atom_around_bond(dpsi, posAtoms[ia], ca_pos, c_pos)
-                        #print(atom[0], atom[1])          
-                ia += 1
-                
-    def normalize( self, v ):
-        norm = np.linalg.norm( v )
-        if norm == 0: 
-            return v
-        return v/norm  
-
-    def rotate_atom_around_bond( self, theta, atom_pos, bond_start, bond_end ):
-        #https://en.wikipedia.org/wiki/Rodrigues%27_rotation_formula
-        v = np.array( atom_pos ) - np.array( bond_start )
-        ant = np.array( bond_end ) - np.array( bond_start )
-        ant = self.normalize( ant )
-        rot_pos = v * np.cos( theta ) + ( np.cross( ant, v ) ) * np.sin( theta ) + ant * ( np.dot( ant, v ) ) * ( 1.0 - np.cos( theta ) )
-        return list( rot_pos + np.array( bond_start ) )
-
     def calcKabschRMSD( self, mod ):
         P = np.array( self.experimental.posAtoms )
         self.q = np.array( mod )
@@ -119,20 +67,18 @@ class ACOR:
     def evaluator( self, x ):
         rotation = [ ( 2 * math.pi * i ) - math.pi for i in x ]
         rotation = np.hstack( ( 0.0, rotation, 0.0 ) )
-        print "r0",rotation
-        [rotation[i:i+2] for i in range( 0, len( rotation ), 2 )]
-        print "r",rotation
+        rotation = [rotation[i:i+2] for i in range( 0, len( rotation ), 2 )]
 
-        mod = copy.deepcopy( self.modified.posAtoms )
-
-        app = AminoPhiPsi( "1L2Y-P.pdb" )
+        app = AminoPhiPsi( "1L2Y-P.pdb" )        
+        app.pdb.adjustAtoms( self.experimental.atoms, self.experimental.aminoAcids )
+        #print app.pdb.posAtoms
         app.adjustPhiPsi( rotation )
 
-        fitness = self.calcKabschRMSD( mod )
+        fitness = self.calcKabschRMSD( app.pdb.posAtoms )
         return fitness
 
     def multiprocessEvaluator( self, x ):
-        nprocs = 4
+        nprocs = 8
         pool = multiprocessing.Pool( processes = nprocs )
         results = [pool.apply_async( evals, [self, c] ) for c in x]
         pool.close()
@@ -147,13 +93,11 @@ class ACOR:
         self.generations = []
         self.values = []
 
-        # initilize matrices
         solutions = np.zeros( ( self.sizeSolutions, self.numVar ) )
         mFitness = np.zeros( ( self.sizeSolutions, 1 ) )
 
         print '-----------------------------------------'
         print 'Starting initilization of solution matrix'
-        print '-----------------------------------------'
 
         initialSolution = self.initialize()
         vFitness = self.multiprocessEvaluator( initialSolution )
@@ -162,16 +106,13 @@ class ACOR:
             mFitness[i] = vFitness[i]
 
         solutions = np.hstack( ( initialSolution, mFitness ) )
-        # sort according to fitness (last column)
         solutions = sorted( solutions, key = lambda row: row[-1], reverse = self.maximize )
         solutions = np.array( solutions )
 
-        # initilize weight array with pdf function
         weights = np.zeros( ( self.sizeSolutions ) )
         for i in range( self.sizeSolutions ):
             weights[i] = ( 1/( self.qk * math.sqrt( 2 * math.pi ) ) ) * math.exp( -math.pow( i, 2 )/( 2 * math.pow( self.q, 2 ) * math.pow( self.sizeSolutions, 2 ) ) )
 
-        # initialize variables
         iterations = 1
         best_par = []
         best_obj = []
@@ -190,7 +131,6 @@ class ACOR:
         while iterations <= self.maxIterations:
             print '-----------------------------------------'
             print 'Iteration', iterations
-            print '-----------------------------------------'
 
             Stemp = np.zeros( ( self.numAnts, self.numVar ) )
 
@@ -198,7 +138,6 @@ class ACOR:
             for ant in range( self.numAnts ):
                 # ..it's choosed a solution
                 cs = np.random.random_sample()
-                #print cs
                 total = 0
                 for z in xrange( self.sizeSolutions-1, -1, -1 ):
                     total += p[z]
@@ -213,14 +152,10 @@ class ACOR:
                     for y in xrange( self.sizeSolutions ):
                         sigma += abs( solutions[y][i] - solutions[sol][i] )/( self.sizeSolutions-1 )
 
-                    #print "sigma", i, "=", sigma
-
                     # calc 'i' value with gaussian functions
                     x = np.random.random_sample()
                     gi = weights[sol]*math.exp( -math.pow( x - solutions[sol][i], 2 ) / ( 2*math.pow( sigma, 2 ) ) )* (1/( sigma*math.pow( 2*math.pi, 2 ) ))
 
-                    #print gi
-                    #Stemp[ant][i] = sigma[i] * x + solutions[selection][i]
                     Stemp[ant][i] = gi
                     if Stemp[ant][i] > self.upperBound[i]:
                         Stemp[ant][i] = self.upperBound[i]
@@ -246,7 +181,6 @@ class ACOR:
             # keep best solutions
             solutions = Solution_temp[:self.sizeSolutions][:]
 
-            #print "solutions", solutions
             # keep best after each iteration
             best_par.append(solutions[0][:self.numVar])
             best_obj.append(solutions[0][-1])
@@ -255,19 +189,18 @@ class ACOR:
             worst_obj.append(solutions[-1][-1])
 
             #print "Best individual:", self.parameters
-            #print best_sol[0][0:len(self.parameters)]
-            print "Fitness:", solutions[0][:][8]
+            #print best_sol[0][0:len( self.parameters )]
+            print "Fitness:", solutions[0][:][len( self.parameters )]
             self.generations.append( iterations )
-            self.values.append( solutions[0][:][8] )
+            self.values.append( solutions[0][:][len( self.parameters )] )
 
             iterations += 1
 
         best_sol = sorted( best_sol, key=lambda row: row[-1], reverse = self.maximize )
 
         print "Best individual:", self.parameters
-        print best_sol[0][0:len(self.parameters)]
-        print "Fitness:"
-        print best_sol[0][-1]
+        print best_sol[0][0:len( self.parameters )]
+        print "Fitness:", best_sol[0][-1]
 
         print self.generations
         print self.values
@@ -280,11 +213,15 @@ class ACOR:
         for i in xrange( len( rotation ) ):
             rt.append( rotation[i] )
 
-        mod = copy.deepcopy( self.modified.posAtoms )
+        rotation = [rt[i:i+2] for i in range( 0, len( rt ), 2 )]
 
-        self.rotate_to( rt, self.modified.atoms, self.modified.aminoAcids, mod )
+        app = AminoPhiPsi( "1L2Y-P.pdb" )
+        app.pdb.adjustAtoms( self.experimental.atoms, self.experimental.aminoAcids )
+        print rotation
+        app.adjustPhiPsi( rotation )
+        mod = app.pdb.posAtoms
 
-        pdbNew = open( "1PLX-vFitness.pdb", "weights" )
+        pdbNew = open( "1L2Y-F.pdb", "w" )
         countTotal = 1
         acid = 0
         aa = None
