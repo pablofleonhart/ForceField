@@ -8,19 +8,19 @@ class PDBReader:
 	NITROGEN_TAG = " N  "
 	BACKBONE_ATOMS = ( "N", "CA", "C", "O" )
 	ATOM_TAG = "ATOM"
-	END_TAG = "TER"
-
-	fileName = ""
-	atoms = []
-	aminoAcids = []
-	posAtoms = []
-	backbone = []
-	alpha = []
-	content = []
-	aAcids = []
-	dicContent = {}
+	END_TAG = "TER"	
 
 	def __init__( self, fileName ):
+		self.fileName = ""
+		self.atoms = []
+		self.aminoAcids = []
+		self.posAtoms = []
+		self.backbone = []
+		self.alpha = []
+		self.content = []
+		self.aAcids = []
+		self.dicContent = {}
+
 		self.fileName = fileName
 		self.readFile()
 
