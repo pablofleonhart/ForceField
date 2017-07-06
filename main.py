@@ -9,11 +9,10 @@ import rmsd
 import sys
 
 class Builder( object ):
-	experimental = None
-	modified = None
-	mod = None
-
 	def __init__( self ):
+		self.experimental = None
+		self.modified = None
+		self.mod = None
 		sequence = raw_input( "- Enter the desired aminoacid sequence or use the default (NLYIQWLKDGGPSSGRPPPS) by pressing 'Enter': " )
 
 		if len( sequence ) == 0:
@@ -62,12 +61,12 @@ class Builder( object ):
 				 [0.62560371156870076, 2.9850669485863666], 
 				 [2.8679314685005073, math.pi*2]]'''
 
-			ang = [[-math.pi/2.0 for x in range( 2 )] for y in range( 20 )]
+			'''ang = [[math.pi/2.9 for x in range( 2 )] for y in range( 20 )]
 
 			aminoPhiPsi.adjustPhiPsi( ang )
-			aminoPhiPsi.writePDBFile( "1L2Y-F.pdb" )
+			aminoPhiPsi.writePDBFile( "1L2Y-F.pdb" )'''
 
-			'''self.readFiles( "files/1L2Y.pdb", "1L2Y-P.pdb" )
+			self.readFiles( "files/1L2Y.pdb", "1L2Y-P.pdb" )
 			self.calcRMSD()
 			self.calcKabschRMSD()
 
@@ -75,8 +74,8 @@ class Builder( object ):
 			params = ['psi1', 'phi2', 'psi2', 'phi3', 'psi3', 'phi4', 'psi4', 'phi5', 'psi5', 'phi6', 'psi6', 'phi7', 'psi7', 'phi8',\
 					  'psi8', 'phi9', 'psi9', 'phi10', 'psi10', 'phi11', 'psi11', 'phi12', 'psi12', 'phi13', 'psi13', 'phi14', 'psi14',\
 					  'phi15', 'psi15', 'phi16', 'psi16', 'phi17', 'psi17', 'phi18', 'psi18', 'phi19', 'psi19', 'phi20']
-			acor = ACOR( self.experimental, self.modified, params, False, 1 )
-			acor.evolve()'''
+			acor = ACOR( self.experimental, self.modified, params, False, 10 )
+			acor.evolve()
 
 		else:
 			print "You must need specify at least two amino acids!"

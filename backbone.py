@@ -1,13 +1,15 @@
 import copy
 
-class Backbone:
+class Backbone( object ):
 	NITROGEN_TAG = "N"
 	ALPHA_TAG = "CA"
 	CARBON_TAG = "C"
-	posN = []
-	posCA = []
-	posC = []
-	aminoAcid = None
+
+	def __init__( self ):
+		self.posN = []
+		self.posCA = []
+		self.posC = []
+		self.aminoAcid = None
 
 	def setPosAtom( self, atom, aminoAcid, positions ):
 		valid = False

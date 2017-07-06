@@ -16,20 +16,7 @@ def evals( acor, c ):
     return acor.evaluator( c )
 
 class ACOR:
-    pdbPattern = "{:6s}{:5d} {:^4s}{:1s}{:3s} {:1s}{:4d}{:1s} {:8.3f}{:8.3f}{:8.3f}{:6.2f}{:6.2f}"
-    NHC_ATOMS = ("N", "H", "1H", "H1", "2H", "H2", "3H", "H3", "CA")
-    generations = []
-    values = []
-    mod = []
-    experimental = None
-    modified = None
-    # maximization or minimization problem
-    maximize = False
-
-    # variables
-    parameters = None
-    # number of variables
-    numVar = 0
+    pdbPattern = "{:6s}{:5d} {:^4s}{:1s}{:3s} {:1s}{:4d}{:1s}   {:8.3f}{:8.3f}{:8.3f}{:6.2f}{:6.2f}          {:>2s}{:2s}"
     # size of solution archive
     sizeSolutions = 200
     # number of ants
@@ -40,11 +27,6 @@ class ACOR:
     qk = q * sizeSolutions
     # parameter self.xi (like pheromone evaporation)
     xi = 0.85
-    # maximum iterations
-    maxIterations = 100
-    # bounds of variables
-    upperBound = []
-    lowerBound = []
 
     def __init__( self, exp, mod, variables, maximization, iterations ):
         self.experimental = exp
@@ -55,6 +37,9 @@ class ACOR:
         self.maxIterations = iterations
         self.upperBound = [1] * self.numVar
         self.lowerBound = [0] * self.numVar
+        self.generations = []
+        self.values = []
+        self.mod = []
 
     def calcKabschRMSD( self, mod ):
         P = np.array( self.experimental.posAtoms )
@@ -230,7 +215,7 @@ class ACOR:
                 aa = self.modified.aminoAcids[z]
                 acid += 1
             pdbNew.write( self.pdbPattern.format( "ATOM", countTotal, str( self.modified.atoms[z] ), " ", str( self.modified.aAcids[z] ), " ", \
-                          acid, " ", float( mod[z][0] ), float( mod[z][1] ), float( mod[z][2] ), float( 1.00 ), float( 0.0 ) ) + "\n" )
+                          acid, " ", float( mod[z][0] ), float( mod[z][1] ), float( mod[z][2] ), float( 1.00 ), float( 0.0 ), "", "" ) + "\n" )
 
             countTotal += 1
 

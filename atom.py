@@ -1,20 +1,4 @@
 class Atom( object ):
-	tag = ''
-	serial = ''
-	atom = ''
-	locIndicator = ''
-	residue = ''
-	chainID = ''
-	seqResidue = ''
-	insResidue = ''
-	xCor = ''
-	yCor = ''
-	zCor = ''
-	occupancy = ''
-	temperature = ''
-	symbol = ''
-	chargeAtom = ''
-
 	def __init__( self, line ):
 		self.tag = line[0:6]
 		self.serial = line[6:11]

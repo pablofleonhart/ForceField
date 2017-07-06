@@ -5,42 +5,30 @@ import sys
 
 class PDBAligner:
 
-    def transform( self, modPosAtoms, translation, rotation ):
-        tempX = np.zeros( ( len( modPosAtoms ), 3 ) )
-        tempY = np.zeros( ( len( modPosAtoms ), 3 ) )
-        solution = np.zeros( ( len( modPosAtoms ), 3 ) )
+    def transform( self, transformation, modAtoms ):
+        translation = np.matrix( [transformation[0:3]]*len( modAtoms ) )
+        rotation = transformation[3:6]
 
-        rotationX = [ [1.0, 0.0, 0.0], [0.0, math.cos( rotation[0] ), -math.sin( rotation[0] )], [0.0, math.sin( rotation[0] ), math.cos( rotation[0] )] ]
-        rotationY = [ [math.cos( rotation[1] ), 0.0, math.sin( rotation[1] )], [0.0, 1.0, 0.0], [-math.sin( rotation[1] ), 0.0, math.cos( rotation[1] )] ]
-        rotationZ = [ [math.cos( rotation[2] ), -math.sin( rotation[2] ), 0.0], [math.sin( rotation[2] ), math.cos( rotation[2] ), 0.0], [0.0, 0.0, 1.0] ]
+        rotationX = np.matrix( [[1.0, 0.0, 0.0], [0.0, math.cos( rotation[0] ), -math.sin( rotation[0] )], [0.0, math.sin( rotation[0] ), math.cos( rotation[0] )]] )
+        rotationY = np.matrix( [[math.cos( rotation[1] ), 0.0, math.sin( rotation[1] )], [0.0, 1.0, 0.0], [-math.sin( rotation[1] ), 0.0, math.cos( rotation[1] )]] )
+        rotationZ = np.matrix( [[math.cos( rotation[2] ), -math.sin( rotation[2] ), 0.0], [math.sin( rotation[2] ), math.cos( rotation[2] ), 0.0], [0.0, 0.0, 1.0]] )
+        rotationXYZ = rotationZ * rotationY * rotationX
 
-        # rotation
-        for i in range( len( modPosAtoms ) ):
-            for j in range( 3 ):
-                for k in range( 3 ):
-                    tempX[i][j] += modPosAtoms[i][k] * rotationX[k][j]
+        transformedAtoms = np.matrix(copy.deepcopy( modAtoms ) )
+        transformedAtoms = transformedAtoms + translation
+        transformedAtoms = transformedAtoms * rotationXYZ.transpose()
+       
+        transformedAtoms = np.matrix.tolist( transformedAtoms )
+        return transformedAtoms
 
-            for j in range( 3 ):
-                for k in range( 3 ):
-                    tempY[i][j] += tempX[i][k] * rotationY[k][j]
+    def calcRMSD( self, refAtoms, modAtoms ):
+        #transformedAtoms = self.align( transformation, modAtoms )
+        distanceSum = 0.0
 
-            for j in range( 3 ):
-                for k in range( 3 ):
-                    solution[i][j] += tempY[i][k] * rotationZ[k][j]
+        for coord in zip( refAtoms, modAtoms ):
+            distanceSum += ( coord[0][0] - coord[1][0] )**2
+            distanceSum += ( coord[0][1] - coord[1][1] )**2 
+            distanceSum += ( coord[0][2] - coord[1][2] )**2
 
-        # translation
-        for i in range( len( modPosAtoms ) ):
-            for j in range( 3 ):
-                solution[i][j] += translation[j]
-
-        return solution
-
-    def calcRMSD( self, reference, solution ):
-        sumDistance = 0
-
-        for i in range( len( reference ) ):
-            sumDistance += math.pow( reference[i][0] - solution[i][0], 2 )
-            sumDistance += math.pow( reference[i][1] - solution[i][1], 2 )
-            sumDistance += math.pow( reference[i][2] - solution[i][2], 2 )
-
-        return math.sqrt( sumDistance/2.0 )
+        score = math.sqrt( distanceSum / float( len( refAtoms ) ) )
+        return score

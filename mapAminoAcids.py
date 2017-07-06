@@ -11,8 +11,6 @@ class AminoAcids( object ):
 	HYDROGEN_CARBOXYL = ( "HC", "HOC", "HO" )
 	HYDROGEN_AMINO = ( "H", "1H" )
 	NITROGEN = "N"
-	dicContent = {}
-	dicResults = {}
 
 	dic = { "A": "files/alanine.pdb",
 			"R": "files/arginine.pdb",
@@ -139,6 +137,8 @@ class AminoAcids( object ):
 	def __init__( self, sequence, fileName ):
 		self.sequence = sequence
 		self.fileName = fileName
+		self.dicContent = {}
+		self.dicResults = {}
 
 		self.readSequence()
 		self.matchAminoAcids()

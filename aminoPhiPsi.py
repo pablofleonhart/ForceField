@@ -5,24 +5,23 @@ import matplotlib.pyplot as plt
 import numpy as np
 
 class AminoPhiPsi:
-	pdbPattern = "{:6s}{:5d} {:^4s}{:1s}{:3s} {:1s}{:4d}{:1s} {:8.3f}{:8.3f}{:8.3f}{:6.2f}{:6.2f}"
+	pdbPattern = "{:6s}{:5d} {:^4s}{:1s}{:3s} {:1s}{:4d}{:1s}   {:8.3f}{:8.3f}{:8.3f}{:6.2f}{:6.2f}          {:>2s}{:2s}"
 	filename = None
 	ATOM_TAG = "ATOM"
 	END_TAG = "TER"
 	ALPHA_TAG = " CA "
 	CARBON_TAG = " C  "
 	NITROGEN_TAG = " N  "
-	OC_ATOMS = ( " C  ", " O  ", " OC ", " HOC", " HC ", " HO ", " OXT" )
-	NH_ATOMS  = ( " N  ", " H  ", "1H  ", " H1 ", "2H  ", " H2 ", "3H  ", " H3 " )
+	OC_ATOMS = ( "C", "O", "OC", "HOC", "HC", "HO", "OXT" )
+	NH_ATOMS  = ( "N", "H", "1H", "H1", "2H", "H2", "3H", "H3" )
 	NHC_ATOMS = ( "N", "H", "1H", "H1", "2H", "H2", "3H", "H3", "CA" )
 
-	phi = []
-	psi = []
-	angles = []
-	omega = []
-	pdb = None
-
-	def __init__( self, filename ):
+	def __init__( self, filename ):		
+		self.phi = []
+		self.psi = []
+		self.angles = []
+		self.omega = []
+		self.pdb = None
 		self.filename = filename
 		self.readFile()
 		self.calcAngles()
@@ -56,11 +55,11 @@ class AminoPhiPsi:
 			if i < len( self.pdb.dicContent )-1:
 				psiValue = self.calcDihedralAngle( self.pdb.dicContent.get( str( i ) ).getPosN(), self.pdb.dicContent.get( str( i ) ).getPosCA(), self.pdb.dicContent.get( str( i ) ).getPosC(), self.pdb.dicContent.get( str( i+1 ) ).getPosN() )				
 
-			self.phi.append( math.radians( phiValue ) )
-			self.psi.append( math.radians( psiValue ) )
-			self.angles.append( math.radians( phiValue ) )
-			self.angles.append( math.radians( psiValue ) )
-			self.omega.append( math.radians( omegaValue ) )
+			self.phi.append( self.rad( phiValue ) )
+			self.psi.append( self.rad( psiValue ) )
+			self.angles.append( self.rad( phiValue ) )
+			self.angles.append( self.rad( psiValue ) )
+			self.omega.append( self.rad( omegaValue ) )
 
 			file.write( "{:5s}  {:7.2f}  {:7.2f}  {:7.2f}".format( self.pdb.dicContent.get( str( i ) ).getAminoAcid(), phiValue, psiValue, omegaValue ) + "\n" )
 
@@ -68,9 +67,10 @@ class AminoPhiPsi:
 
 	def writeAngles( self ):
 		file = open( "aminoPhiPsi.txt", "w" )
+		file.write( "{:5s}  {:>7s}  {:>7s}  {:>7s}".format( "Amino", "Phi", "Psi", "Omega" ) + "\n" )
 		for i in range ( 0, len( self.pdb.dicContent ) ):
 			file.write( "{:5s}  {:7.2f}  {:7.2f}  {:7.2f}".format( self.pdb.dicContent.get( str( i ) ).getAminoAcid(), \
-						self.phi[i], self.psi[i], self.omega[i] ) + "\n" )
+						math.degrees( self.phi[i] ), math.degrees( self.psi[i] ), math.degrees( self.omega[i] ) ) + "\n" )
 
 		file.close()
 
@@ -121,129 +121,23 @@ class AminoPhiPsi:
 
 	def rotate( self, angle, atom, carb, nitro ):
 		ang = angle
-		v = np.array(atm) - np.array(carb)
+		v = np.array(atom) - np.array(carb)
 		k = np.array(nitro) - np.array(carb)
 		k = k/np.linalg.norm(k)
 		v = v * np.cos(ang) + (np.cross(k,v))*np.sin(ang) + k*(np.dot(k,v)) *(1.0-np.cos(ang))
 		v = v + np.array(carb)
 		return list(v)
 
-	def _psi( self, atoms, posAtoms, angle ):
-		newStruct = []
-		idx = 0
-		pCA = []
-		pC = []
-		for atom in atoms[0]:
-			if atom.strip() == "CA":
-				pCA = posAtoms[idx]
-
-			elif atom.strip() == "C":
-				pC = posAtoms[idx]
-
-			idx += 1
-
-			print pCA, pC
-		'''for x,aa in enumerate(structure):
-			amino = []
-			if x == 0:
-				for atom in aa:
-					if atom[2]== "O":
-						atom[5:8] = rotate(angle, atom[5:8],pCA,pC)
-						amino.append(atom)
-					else:
-						amino.append(atom)
-			else:
-				for atom in aa:
-					atom[5:8] = rotate(angle, atom[5:8],pCA,pC)
-					amino.append(atom)
-
-		newStruct.append(amino)'''
-
-		return posAtoms
-
-	'''def _phi( self, atoms, posAtoms, angle ):
-		newStruct = []
-		idx = 0
-		for atom in atoms:
-			if atom.strip() == "CA":
-				pCA = posAtoms[idx]
-
-			elif atom.strip() == "N":
-				pN = posAtoms[idx]
-
-			idx += 1
-
-		for x, aa in enumerate( atoms )
-			amino = []
-			if x == 0:
-				for atom in aa:
-					if atom not in self.NHC_ATOMS:
-						atom[5:8] = rotate(angle, atom[5:8],pN,pCA)
-						amino.append( atom )
-					else:
-						amino.append( atom )
-			else:
-				for atom in aa:
-					atom[5:8] = rotate(angle, atom[5:8],pN,pCA)
-					amino.append(atom)
-			newStruct.append(amino)
-		return newStruct'''
-
-	def rotatePhiPsi( self, angles = [] ):
-		size = max( self.pdb.aminoAcids )
-		if len( angles ) == 0:
-			angles = [[math.pi for x in range( 2 )] for y in range( size )]
-
-		sizeAminoAcids = len( self.pdb.dicContent.keys() )
-		for x in xrange( sizeAminoAcids ):
-			#print x
-			if x == 0:
-				self.pdb.posAtoms = self._psi( self.pdb.atoms, self.pdb.posAtoms, angles[x][1] )
-
-			'''elif x == ( len( self.pdb.dicContent.keys() ) - 1 ):
-				self.pdb.posAtoms = self.pdb.posAtoms[:x]+( _phi( self.pdb.atoms[x:], self.pdb.posAtoms[x:], angles[x][0] ) )
-
-			else:
-				self.pdb.posAtoms = self.pdb.posAtoms[:x]+( _phi( self.pdb.posAtoms[x:],angles[x][0]))
-				self.pdb.posAtoms = self.pdb.posAtoms[:x]+( _psi( self.pdb.posAtoms[x:],angles[x][1]))'''
-
 	def adjustPhiPsi( self, angles = [] ):
 		size = max( self.pdb.aminoAcids )
 		if len( angles ) == 0:
 			angles = [[math.pi for x in range( 2 )] for y in range( size )]
 
-		#print angles
-
-		#print "########################"
-		#print self.pdb.posAtoms[15]
-		'''print "angles", angles
-		print self.phi
-		print self.psi'''
 		sizeAminoAcids = len( self.pdb.dicContent.keys() )
 		minIndex = min( self.pdb.aminoAcids )
 		maxIndex = max( self.pdb.aminoAcids )
-		#print minIndex, maxIndex
 
-		print self.phi
-		print self.psi
 		for i in xrange( sizeAminoAcids ):
-			print "i", i
-			'''print "$", self.psi
-			if i == 0:
-				carbonIndex = zip( self.pdb.atoms, self.pdb.aminoAcids ).index( ( self.CARBON_TAG, i + 1 ) )  
-				alphaIndex = zip( self.pdb.atoms, self.pdb.aminoAcids ).index( ( self.ALPHA_TAG, i + 1 ) )
-				dpsi = math.atan2( math.sin( angles[i][1] - self.psi[i] ), math.cos( angles[i][1] - self.psi[i] ) )              
-				carbonPos = self.pdb.posAtoms[carbonIndex] 
-				posCA = self.pdb.posAtoms[alphaIndex]
-
-				print carbonPos, posCA
-
-				idx = 0
-				for atom in zip( self.pdb.atoms, self.pdb.aminoAcids ):
-					if ( i + minIndex < maxIndex ) and ( atom[1] > i + minIndex or ( atom[1] == i + minIndex and ( atom[0] == " O  " ) ) ): 
-						self.pdb.posAtoms[idx] = self.rotateAtomsBond( dpsi, self.pdb.posAtoms[idx], posCA, carbonPos )
-					idx += 1'''
-
 			if i > 0:
 				currentCarbonIndex = zip( self.pdb.atoms, self.pdb.aminoAcids ).index( ( self.CARBON_TAG, i + minIndex ) )
 				nitrogenIndex = zip( self.pdb.atoms, self.pdb.aminoAcids ).index( ( self.NITROGEN_TAG, i + minIndex ) )   
@@ -255,17 +149,13 @@ class AminoPhiPsi:
 				posCA = self.pdb.posAtoms[alphaIndex]			
 				currentCarbonPos = self.pdb.posAtoms[currentCarbonIndex]
 
-				phi = math.radians( self.calcDihedralAngle( carbonPos, nitrogenPos, posCA, currentCarbonPos ) )
+				phi = self.rad( self.calcDihedralAngle( carbonPos, nitrogenPos, posCA, currentCarbonPos ) )
 				dphi = self.getAngle( phi, angles[i][0] )
-				#dphi = math.atan2( math.sin( angles[i][0] - phi ), math.cos( angles[i][0] - phi ) )
-				#print "dphi", dphi
 				
-				print "N", nitrogenPos, nitrogenIndex
-				print "CA", posCA, alphaIndex
 				idx = 0
 				for atom in zip( self.pdb.atoms, self.pdb.aminoAcids ):
 					if ( i > 0 ) and ( atom[1] > i + minIndex or ( atom[1] == i + minIndex and ( atom[0].strip() not in self.NHC_ATOMS ) ) ):
-						self.pdb.posAtoms[idx] = self.rotateAtomsBond( dphi, self.pdb.posAtoms[idx], nitrogenPos, posCA )
+						self.pdb.posAtoms[idx] = self.rotate( dphi, self.pdb.posAtoms[idx], nitrogenPos, posCA )
 					idx += 1
 
 			if i + minIndex < maxIndex:
@@ -279,18 +169,14 @@ class AminoPhiPsi:
 				posCA = self.pdb.posAtoms[alphaIndex]
 				nitrogenPos = self.pdb.posAtoms[nitrogenIndex]
 
-				psi = math.radians( self.calcDihedralAngle( currentNitrogenPos, posCA, carbonPos, nitrogenPos ) )
+				psi = self.rad( self.calcDihedralAngle( currentNitrogenPos, posCA, carbonPos, nitrogenPos ) )
 				dpsi = self.getAngle( psi, angles[i][1] )
-				#dpsi = math.atan2( math.sin( angles[i][1] - psi ), math.cos( angles[i][1] - psi ) )              				
-				print "C", carbonPos, carbonIndex
-				print "CA", posCA, alphaIndex
+
 				idx = 0
 				for atom in zip( self.pdb.atoms, self.pdb.aminoAcids ):
 					if ( i + minIndex < maxIndex ) and ( atom[1] > i + minIndex or ( atom[1] == i + minIndex and ( atom[0].strip() == "O" ) ) ): 
-						self.pdb.posAtoms[idx] = self.rotateAtomsBond( dpsi, self.pdb.posAtoms[idx], posCA, carbonPos )
+						self.pdb.posAtoms[idx] = self.rotate( dpsi, self.pdb.posAtoms[idx], posCA, carbonPos )
 					idx += 1
-
-				self.writePDBFile( "test" + str(i) + ".pdb" )
 
 	def getAngle( self, current, target ):
 		diff = target - current
@@ -306,7 +192,7 @@ class AminoPhiPsi:
 		norm = np.linalg.norm( v )
 		if norm == 0: 
 			return v
-		return v/norm  
+		return v/norm
 
 	def rotateAtomsBond( self, theta, posAtom, bond_start, bond_end ):
 		v = np.array( posAtom ) - np.array( bond_start )
@@ -316,6 +202,7 @@ class AminoPhiPsi:
 		return list( rot_pos + np.array( bond_start ) )
 
 	def getOmegas( self ):
+		self.omega = []
 		angles = []
 		ca = self.pdb.getCAInfo()
 		n  = self.pdb.getNInfo()
@@ -330,12 +217,11 @@ class AminoPhiPsi:
 				nex_ca_pos = ca[index][2]
 				omg = self.calcDihedralAngle( posCA, carbonPos, nex_nitrogenPos, nex_ca_pos )
 				angles.append( omg )
-				self.omega.append( math.radians( omg ) )
+				self.omega.append( self.rad( omg ) )
 			else:
 				angles.append( 360.00 )
-				self.omega.append( math.radians( 360.00 ) )
+				self.omega.append( self.rad( 360.00 ) )
 
-		#self.omega = angles
 		return angles
 
 	def getPhiPsi( self ):
@@ -364,8 +250,8 @@ class AminoPhiPsi:
 			else:
 				psiValue = 360.00
 
-			self.phi.append( math.radians( phiValue ) )
-			self.psi.append( math.radians( psiValue ) )
+			self.phi.append( self.rad( phiValue ) )
+			self.psi.append( self.rad( psiValue ) )
 
 			angles.append( phiValue )
 			angles.append( psiValue )
@@ -403,7 +289,7 @@ class AminoPhiPsi:
 	def adjustPeptideBonds( self, angles = [] ):
 		sizeAminoAcids = len( self.pdb.aminoAcids )
 		if len( angles ) == 0:
-			angles = [math.radians( 120.0 )] * sizeAminoAcids
+			angles = [self.rad( 120.0 )] * sizeAminoAcids
 
 		for i in xrange( sizeAminoAcids ):
 			if i + min( self.pdb.aminoAcids ) < max( self.pdb.aminoAcids ):
