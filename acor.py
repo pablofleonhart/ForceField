@@ -11,6 +11,7 @@ import copy
 from pdbAligner import PDBAligner
 from aminoPhiPsi import AminoPhiPsi
 import rmsd
+from funcEnergy import EnergyFunction
 
 def evals( acor, c ):
     return acor.evaluator( c )
@@ -18,9 +19,9 @@ def evals( acor, c ):
 class ACOR:
     pdbPattern = "{:6s}{:5d} {:^4s}{:1s}{:3s} {:1s}{:4d}{:1s}   {:8.3f}{:8.3f}{:8.3f}{:6.2f}{:6.2f}          {:>2s}{:2s}"
     # size of solution archive
-    sizeSolutions = 200
+    sizeSolutions = 20
     # number of ants
-    numAnts = 150
+    numAnts = 10
     # parameter self.q
     q = 0.0001
     # standard deviation
@@ -59,11 +60,13 @@ class ACOR:
         #print app.pdb.posAtoms
         app.adjustPhiPsi( rotation )
 
-        fitness = self.calcKabschRMSD( app.pdb.posAtoms )
+        #fitness = self.calcKabschRMSD( app.pdb.posAtoms )
+        fe = EnergyFunction( app.pdb )
+        fitness = fe.calcEnergy()
         return fitness
 
     def multiprocessEvaluator( self, x ):
-        nprocs = 8
+        nprocs = 1
         pool = multiprocessing.Pool( processes = nprocs )
         results = [pool.apply_async( evals, [self, c] ) for c in x]
         pool.close()
@@ -190,7 +193,7 @@ class ACOR:
         print self.generations
         print self.values
 
-        rotation = [ (2*math.pi*i)-math.pi for i in best_sol[0][0:len(self.parameters)] ]
+        rotation = [ (2*math.pi*i)-math.pi for i in best_sol[0][0:len( self.parameters )] ]
         rotation.append( 0.0 )
 
         rt = []
@@ -220,4 +223,4 @@ class ACOR:
             countTotal += 1
 
         pdbNew.write( "TER\n" )
-        pdbNew.close()
+        pdbNew.close()        

@@ -131,7 +131,7 @@ def funEnergia(proteina):
 							Vda = estaDihedral(i, j, k, k+1) # Chama funcao para calcular Vda
 							somatorio += Vda
 						k += 1
-						#print k, len( proteina )
+						print k, len( proteina )
 						if k >= (len(proteina)-1) or proteina[j][2] == proteina[k][2]:
 							break
 			else: # ligacao peptidica
@@ -162,7 +162,7 @@ def files():
 	global aminoacids
 #-------------------------
 
-	arq = open('reference.pdb', 'r')
+	arq = open('1L2Y-F.pdb', 'r')
 	texto = arq.readlines()
 	arq.close()
     
@@ -182,7 +182,7 @@ def files():
 	#print proteina               
 #------------------------
 
-	arq = open('AMBER99/ffbonded.itp','r')
+	arq = open('amber99/ffbonded.itp','r')
 	texto = arq.readlines()
 	arq.close()
 	
@@ -229,7 +229,7 @@ def files():
 	
 #-------------------------
 
-	arq = open('AMBER99/ffnonbonded.itp','r')
+	arq = open('amber99/ffnonbonded.itp','r')
 	texto = arq.readlines()
 	arq.close()
 	
@@ -245,7 +245,7 @@ def files():
 
 #-------------------------
 	
-	arq = open('AMBER99/aminoacids.rtp','r')
+	arq = open('amber99/aminoacids.rtp','r')
 	texto = arq.readlines()
 	arq.close()
 	

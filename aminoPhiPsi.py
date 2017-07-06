@@ -26,12 +26,6 @@ class AminoPhiPsi:
 		self.readFile()
 		self.calcAngles()
 
-	def degrees( self, x ):
-		return x*180/math.pi
-
-	def rad( self, x ):
-		return math.pi*x/180
-
 	def readFile( self ):
 		self.pdb = PDBReader( self.filename )
 
@@ -55,11 +49,11 @@ class AminoPhiPsi:
 			if i < len( self.pdb.dicContent )-1:
 				psiValue = self.calcDihedralAngle( self.pdb.dicContent.get( str( i ) ).getPosN(), self.pdb.dicContent.get( str( i ) ).getPosCA(), self.pdb.dicContent.get( str( i ) ).getPosC(), self.pdb.dicContent.get( str( i+1 ) ).getPosN() )				
 
-			self.phi.append( self.rad( phiValue ) )
-			self.psi.append( self.rad( psiValue ) )
-			self.angles.append( self.rad( phiValue ) )
-			self.angles.append( self.rad( psiValue ) )
-			self.omega.append( self.rad( omegaValue ) )
+			self.phi.append( math.radians( phiValue ) )
+			self.psi.append( math.radians( psiValue ) )
+			self.angles.append( math.radians( phiValue ) )
+			self.angles.append( math.radians( psiValue ) )
+			self.omega.append( math.radians( omegaValue ) )
 
 			file.write( "{:5s}  {:7.2f}  {:7.2f}  {:7.2f}".format( self.pdb.dicContent.get( str( i ) ).getAminoAcid(), phiValue, psiValue, omegaValue ) + "\n" )
 
@@ -149,7 +143,7 @@ class AminoPhiPsi:
 				posCA = self.pdb.posAtoms[alphaIndex]			
 				currentCarbonPos = self.pdb.posAtoms[currentCarbonIndex]
 
-				phi = self.rad( self.calcDihedralAngle( carbonPos, nitrogenPos, posCA, currentCarbonPos ) )
+				phi = math.radians( self.calcDihedralAngle( carbonPos, nitrogenPos, posCA, currentCarbonPos ) )
 				dphi = self.getAngle( phi, angles[i][0] )
 				
 				idx = 0
@@ -169,7 +163,7 @@ class AminoPhiPsi:
 				posCA = self.pdb.posAtoms[alphaIndex]
 				nitrogenPos = self.pdb.posAtoms[nitrogenIndex]
 
-				psi = self.rad( self.calcDihedralAngle( currentNitrogenPos, posCA, carbonPos, nitrogenPos ) )
+				psi = math.radians( self.calcDihedralAngle( currentNitrogenPos, posCA, carbonPos, nitrogenPos ) )
 				dpsi = self.getAngle( psi, angles[i][1] )
 
 				idx = 0
@@ -217,10 +211,10 @@ class AminoPhiPsi:
 				nex_ca_pos = ca[index][2]
 				omg = self.calcDihedralAngle( posCA, carbonPos, nex_nitrogenPos, nex_ca_pos )
 				angles.append( omg )
-				self.omega.append( self.rad( omg ) )
+				self.omega.append( math.radians( omg ) )
 			else:
 				angles.append( 360.00 )
-				self.omega.append( self.rad( 360.00 ) )
+				self.omega.append( math.radians( 360.00 ) )
 
 		return angles
 
@@ -250,8 +244,8 @@ class AminoPhiPsi:
 			else:
 				psiValue = 360.00
 
-			self.phi.append( self.rad( phiValue ) )
-			self.psi.append( self.rad( psiValue ) )
+			self.phi.append( math.radians( phiValue ) )
+			self.psi.append( math.radians( psiValue ) )
 
 			angles.append( phiValue )
 			angles.append( psiValue )
@@ -289,7 +283,7 @@ class AminoPhiPsi:
 	def adjustPeptideBonds( self, angles = [] ):
 		sizeAminoAcids = len( self.pdb.aminoAcids )
 		if len( angles ) == 0:
-			angles = [self.rad( 120.0 )] * sizeAminoAcids
+			angles = [math.radians( 120.0 )] * sizeAminoAcids
 
 		for i in xrange( sizeAminoAcids ):
 			if i + min( self.pdb.aminoAcids ) < max( self.pdb.aminoAcids ):
