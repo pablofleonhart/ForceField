@@ -7,6 +7,7 @@ import math
 import numpy as np
 import rmsd
 import sys
+from funcEnergy import EnergyFunction
 
 class Builder( object ):
 	def __init__( self ):
@@ -70,15 +71,18 @@ class Builder( object ):
 			self.calcRMSD()
 			self.calcKabschRMSD()
 
-			print( len( self.experimental.atoms ), len( self.modified.atoms ) )
+			#print( len( self.experimental.atoms ), len( self.modified.atoms ) )
 			params = ['psi1', 'phi2', 'psi2', 'phi3', 'psi3', 'phi4', 'psi4', 'phi5', 'psi5', 'phi6', 'psi6', 'phi7', 'psi7', 'phi8',\
 					  'psi8', 'phi9', 'psi9', 'phi10', 'psi10', 'phi11', 'psi11', 'phi12', 'psi12', 'phi13', 'psi13', 'phi14', 'psi14',\
 					  'phi15', 'psi15', 'phi16', 'psi16', 'phi17', 'psi17', 'phi18', 'psi18', 'phi19', 'psi19', 'phi20']
-			acor = ACOR( self.experimental, self.modified, params, False, 2 )
+			acor = ACOR( self.experimental, self.modified, params, False, 1000 )
 			acor.evolve()
 
 			'''fe = EnergyFunction( "1PLX-P.pdb" )
 			print fe.getEnergy()'''
+			'''app = AminoPhiPsi( "1L2Y-P.pdb" )
+			fa = EnergyFunction( app.pdb )
+			print fa.getEnergy()'''
 
 		else:
 			print "You must need specify at least two amino acids!"

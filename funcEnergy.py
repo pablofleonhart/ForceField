@@ -7,6 +7,7 @@ class EnergyFunction( object ):
 	nonbondedFile = "amber99/ffnonbonded.itp"
 
 	cutoff = 8.0
+	constant = math.pow( 2, ( 1.0 / 6.0 ) )
 
 	def __init__( self, pdb ):
 		self.protein = []
@@ -51,13 +52,13 @@ class EnergyFunction( object ):
 		return None
 
 	def renameAtom( self, atom ):
-		if atom == "HB3":
+		if atom.strip() == "HB3":
 			return "HB1"
 
-		elif atom == "2H":
+		elif atom.strip() == "2H":
 			return "H2"
 
-		return atom
+		return atom.strip()
 
 	def findNonbonded( self, atom ):
 		for i in range( len( self.ffnonbonded ) ):
@@ -197,20 +198,24 @@ class EnergyFunction( object ):
 
 		return total		
 
-	def calcLennardJones( self, atomA, atomB, distance ):
-	    sigma = ( atomA[1] + atomB[1] ) / 2 #media aritmetica
-	    epsilon = math.sqrt( atomA[2]*atomB[2] ) #media geometrica
-	    r = distance * 0.1 ##transformar em nm
-	    C12 = ( sigma / r )**12
-	    C6 = ( sigma / r )**6
-	    LJ = 4*epsilon * ( C12 - C6 )
-	    return LJ ##kJ / mol
+	def calcLennardJones( self, atomI, atomJ, distance ):
+		rmini = atomI[1] * self.constant
+		rminj = atomJ[1] * self.constant
+		rminij = ( rmini + rminj ) / 2.0
+		epsilon = math.sqrt( atomI[2] * atomJ[2] ) #media geometrica
+		rij = distance * 0.1 ##transformar em nm
+
+		lj = epsilon * ( math.pow( ( rminij / rij ), 12.0 ) - ( 2.0 * math.pow( ( rminij / rij ), 6.0 ) ) )
+		return lj ##kJ / mol
 
 	def calcCoulumb( self, chargeA, chargeB, distance ):
-	    ke = 138.935485 #kJ mol-1 nm e-2
-	    r = distance * 0.1 ##transformar em nm
-	    VC = ( ke * chargeA * chargeB ) / r
-	    return VC ##kJ/mol
+		eCharge = 1.6022e-19
+		eConstant = 9e9
+		avg = 6.022140857e23
+		ke = eConstant * ( ( eCharge * eCharge ) / 1e-9 ) * avg / 1000.0
+		rij = distance * 0.1 ##transformar em nm
+		cl = ke * ( ( chargeA * chargeB ) / rij )
+		return cl ##kJ/mol
 
 	def getEnergy( self ):
 		total = 0
@@ -228,15 +233,19 @@ class EnergyFunction( object ):
 				dist = self.distance( posAtomI, posAtomJ )
 
 				if not( atomI == "C" and atomJ == "N" and seqAminoI - seqAminoJ == -1 ):
-					if ( ( ( seqAminoI == seqAminoJ and self.areBonded( aminoI, atomI, atomJ ) == False ) or ( seqAminoI != seqAminoJ ) ) and dist <= self.cutoff ):
-						charge1, a1 = self.findCharge( atomI, aminoI ) 
-						#print charge1, a1, aminoI
-						charge2, a2 = self.findCharge( atomJ, aminoJ )						
-						#print charge2, a2, aminoJ
-						#print self.areBonded( aminoI, atomI, atomJ ), atomI, "(", aminoI, ")", atomJ, "(", aminoJ, ")"
-					
+					if ( ( ( seqAminoI == seqAminoJ and self.areBonded( aminoI, atomI, atomJ ) == False ) or ( seqAminoI != seqAminoJ ) ) and dist <= self.cutoff ):						
 						atomI = self.renameAtom( atomI )
-						atomj = self.renameAtom( atomJ )
+						atomJ = self.renameAtom( atomJ )
+						
+						res = self.findCharge( atomI, aminoI )
+						if res is not None:
+							charge1, a1 = res
+						#print charge1, a1, aminoI
+						res = self.findCharge( atomJ, aminoJ )
+						if res is not None:
+							charge2, a2 = res
+						#print charge2, a2, aminoJ
+						#print self.areBonded( aminoI, atomI, atomJ ), atomI, "(", aminoI, ")", atomJ, "(", aminoJ, ")"								
 
 						atom1 = self.findNonbonded( a1 )
 						atom2 = self.findNonbonded( a2 )
@@ -317,18 +326,16 @@ class EnergyFunction( object ):
 		#print len( self.pdb.atoms )
 		#print self.pdb.posAtoms
 		for i in range( len( self.pdb.posAtoms ) ):
-			if self.pdb.content[i].getTag() == 'ATOM':
-				print i, self.pdb.content[i].seqResidue
-				if self.pdb.content[i].seqResidue == 1:					
-					print copy.deepcopy( self.pdb.content[i].getAtom() )
-					self.protein.append( [copy.deepcopy( self.pdb.content[i].getAtom() ), "N" + copy.deepcopy( self.pdb.content[i].getResidue() ), self.pdb.content[i].seqResidue, float( self.pdb.posAtoms[i][0] ), float( self.pdb.posAtoms[i][1] ), float( self.pdb.posAtoms[i][2] )] )
+			#print i
+			if self.pdb.aminoAcids[i] == 1:					
+				self.protein.append( [copy.deepcopy( self.pdb.atoms[i].strip() ), "N" + copy.deepcopy( self.pdb.aAcids[i] ), self.pdb.aminoAcids[i], float( self.pdb.posAtoms[i][0] ), float( self.pdb.posAtoms[i][1] ), float( self.pdb.posAtoms[i][2] )] )
+			else:
+				if self.pdb.aminoAcids[i] == self.pdb.aminoAcids[len( self.pdb.aminoAcids )-2]:
+					self.protein.append( [copy.deepcopy( self.pdb.atoms[i].strip() ), "C" + copy.deepcopy( self.pdb.aAcids[i] ), self.pdb.aminoAcids[i], float( self.pdb.posAtoms[i][0] ), float( self.pdb.posAtoms[i][1] ), float( self.pdb.posAtoms[i][2] )] )
 				else:
-					if self.pdb.content[i].seqResidue == self.pdb.content[len( self.pdb.content )-2].seqResidue:
-						self.protein.append( [copy.deepcopy( self.pdb.content[i].getAtom() ), "C" + copy.deepcopy( self.pdb.content[i].getResidue() ), self.pdb.content[i].seqResidue, float( self.pdb.posAtoms[i][0] ), float( self.pdb.posAtoms[i][1] ), float( self.pdb.posAtoms[i][2] )] )
-					else:
-						self.protein.append( [copy.deepcopy( self.pdb.content[i].getAtom() ), copy.deepcopy( self.pdb.content[i].getResidue() ), self.pdb.content[i].seqResidue, float( self.pdb.posAtoms[i][0] ), float( self.pdb.posAtoms[i][1] ), float( self.pdb.posAtoms[i][2] )] )
+					self.protein.append( [copy.deepcopy( self.pdb.atoms[i].strip() ), copy.deepcopy( self.pdb.aAcids[i] ), self.pdb.aminoAcids[i], float( self.pdb.posAtoms[i][0] ), float( self.pdb.posAtoms[i][1] ), float( self.pdb.posAtoms[i][2] )] )
 
-		print self.protein
+		#print self.protein
 
 	def readAmberFiles( self ):
 		# aminoAcid:

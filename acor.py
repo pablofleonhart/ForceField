@@ -19,9 +19,9 @@ def evals( acor, c ):
 class ACOR:
     pdbPattern = "{:6s}{:5d} {:^4s}{:1s}{:3s} {:1s}{:4d}{:1s}   {:8.3f}{:8.3f}{:8.3f}{:6.2f}{:6.2f}          {:>2s}{:2s}"
     # size of solution archive
-    sizeSolutions = 20
+    sizeSolutions = 200
     # number of ants
-    numAnts = 10
+    numAnts = 150
     # parameter self.q
     q = 0.0001
     # standard deviation
@@ -39,7 +39,8 @@ class ACOR:
         self.upperBound = [1] * self.numVar
         self.lowerBound = [0] * self.numVar
         self.generations = []
-        self.values = []
+        self.energies = []
+        self.rmsds = []
         self.mod = []
 
     def calcKabschRMSD( self, mod ):
@@ -60,13 +61,15 @@ class ACOR:
         #print app.pdb.posAtoms
         app.adjustPhiPsi( rotation )
 
-        #fitness = self.calcKabschRMSD( app.pdb.posAtoms )
+        '''print app.pdb.atoms
+        fitness = self.calcKabschRMSD( app.pdb.posAtoms )'''
         fe = EnergyFunction( app.pdb )
-        fitness = fe.calcEnergy()
+        fitness = fe.getEnergy()
+        #print fitness
         return fitness
 
     def multiprocessEvaluator( self, x ):
-        nprocs = 1
+        nprocs = 8
         pool = multiprocessing.Pool( processes = nprocs )
         results = [pool.apply_async( evals, [self, c] ) for c in x]
         pool.close()
@@ -79,7 +82,9 @@ class ACOR:
 
     def evolve( self ):
         self.generations = []
-        self.values = []
+        self.energies = []
+        self.rmsds = []
+        step = 20
 
         solutions = np.zeros( ( self.sizeSolutions, self.numVar ) )
         mFitness = np.zeros( ( self.sizeSolutions, 1 ) )
@@ -180,7 +185,44 @@ class ACOR:
             #print best_sol[0][0:len( self.parameters )]
             print "Fitness:", solutions[0][:][len( self.parameters )]
             self.generations.append( iterations )
-            self.values.append( solutions[0][:][len( self.parameters )] )
+            self.energies.append( solutions[0][:][len( self.parameters )] )            
+
+            rotation = [ (2*math.pi*i)-math.pi for i in best_sol[0][0:len( self.parameters )] ]
+            rotation.append( 0.0 )
+
+            rt = []
+            rt.append( 0.0 )
+            for i in xrange( len( rotation ) ):
+                rt.append( rotation[i] )
+
+            rotation = [rt[i:i+2] for i in range( 0, len( rt ), 2 )]
+
+            app = AminoPhiPsi( "1L2Y-P.pdb" )
+            app.pdb.adjustAtoms( self.experimental.atoms, self.experimental.aminoAcids )
+            #print rotation
+            app.adjustPhiPsi( rotation )
+            rm = self.calcKabschRMSD( app.pdb.posAtoms )
+            print "RMSD", rm
+            self.rmsds.append( rm )
+
+            if iterations%step == 0:                
+                mod = app.pdb.posAtoms
+
+                pdbNew = open( "1L2Y-F" + str( iterations ) + ".pdb", "w" )
+                countTotal = 1
+                acid = 0
+                aa = None
+                for z in range( 0, len( self.modified.atoms ) ):
+                    if self.modified.aminoAcids[z] != aa:
+                        aa = self.modified.aminoAcids[z]
+                        acid += 1
+                    pdbNew.write( self.pdbPattern.format( "ATOM", countTotal, str( self.modified.atoms[z] ), " ", str( self.modified.aAcids[z] ), " ", \
+                                  acid, " ", float( mod[z][0] ), float( mod[z][1] ), float( mod[z][2] ), float( 1.00 ), float( 0.0 ), "", "" ) + "\n" )
+
+                    countTotal += 1
+
+                pdbNew.write( "TER\n" )
+                pdbNew.close() 
 
             iterations += 1
 
@@ -191,7 +233,15 @@ class ACOR:
         print "Fitness:", best_sol[0][-1]
 
         print self.generations
-        print self.values
+        print self.energies
+        print self.rmsds
+
+        ff = open( "outputs.txt", "w" )
+
+        for i in xrange( len( self.generations ) ):
+            ff.write( str( self.generations[i] ) + " " + str( self.energies[i] ) + " " + str( self.rmsds[i] ) + "\n" )
+        
+        ff.close()
 
         rotation = [ (2*math.pi*i)-math.pi for i in best_sol[0][0:len( self.parameters )] ]
         rotation.append( 0.0 )
@@ -205,7 +255,7 @@ class ACOR:
 
         app = AminoPhiPsi( "1L2Y-P.pdb" )
         app.pdb.adjustAtoms( self.experimental.atoms, self.experimental.aminoAcids )
-        print rotation
+        #print rotation
         app.adjustPhiPsi( rotation )
         mod = app.pdb.posAtoms
 
