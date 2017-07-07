@@ -67,7 +67,7 @@ class Builder( object ):
 			aminoPhiPsi.adjustPhiPsi( ang )
 			aminoPhiPsi.writePDBFile( "1L2Y-F.pdb" )'''
 
-			self.readFiles( "files/1L2Y.pdb", "1L2Y-P.pdb" )
+			self.readFiles( "files/1L2Y.pdb", "1L2Y-F.pdb" )
 			self.calcRMSD()
 			self.calcKabschRMSD()
 
@@ -75,12 +75,20 @@ class Builder( object ):
 			params = ['psi1', 'phi2', 'psi2', 'phi3', 'psi3', 'phi4', 'psi4', 'phi5', 'psi5', 'phi6', 'psi6', 'phi7', 'psi7', 'phi8',\
 					  'psi8', 'phi9', 'psi9', 'phi10', 'psi10', 'phi11', 'psi11', 'phi12', 'psi12', 'phi13', 'psi13', 'phi14', 'psi14',\
 					  'phi15', 'psi15', 'phi16', 'psi16', 'phi17', 'psi17', 'phi18', 'psi18', 'phi19', 'psi19', 'phi20']
-			acor = ACOR( self.experimental, self.modified, params, False, 1000 )
+			acor = ACOR( self.experimental, self.modified, params, False, 200 )
 			acor.evolve()
 
 			'''fe = EnergyFunction( "1PLX-P.pdb" )
 			print fe.getEnergy()'''
-			'''app = AminoPhiPsi( "1L2Y-P.pdb" )
+			'''app = AminoPhiPsi( "files/1L2Y.pdb" )
+			fa = EnergyFunction( app.pdb )
+			print fa.getEnergy()
+
+			app = AminoPhiPsi( "1L2Y-P.pdb" )
+			fa = EnergyFunction( app.pdb )
+			print fa.getEnergy()
+
+			app = AminoPhiPsi( "1L2Y-F.pdb" )
 			fa = EnergyFunction( app.pdb )
 			print fa.getEnergy()'''
 
@@ -105,6 +113,20 @@ class Builder( object ):
 		self.modified.calcCaPos()
 
 	def calcKabschRMSD( self ):
+		P = np.array( self.experimental.alpha )
+		Q = np.array( self.modified.alpha )
+		#print rmsd.kabsch_rmsd( P, Q )
+		P -= rmsd.centroid( P )
+		Q -= rmsd.centroid( Q )
+		print "{:15s} {:6.2f}".format( "Kabsch RMSD:", rmsd.kabsch_rmsd( P, Q ) )
+
+		P = np.array( self.experimental.backbone )
+		Q = np.array( self.modified.backbone )
+		#print rmsd.kabsch_rmsd( P, Q )
+		P -= rmsd.centroid( P )
+		Q -= rmsd.centroid( Q )
+		print "{:15s} {:6.2f}".format( "Kabsch RMSD:", rmsd.kabsch_rmsd( P, Q ) )
+
 		P = np.array( self.experimental.posAtoms )
 		Q = np.array( self.modified.posAtoms )
 		#print rmsd.kabsch_rmsd( P, Q )

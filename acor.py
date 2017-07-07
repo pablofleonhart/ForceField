@@ -19,9 +19,9 @@ def evals( acor, c ):
 class ACOR:
     pdbPattern = "{:6s}{:5d} {:^4s}{:1s}{:3s} {:1s}{:4d}{:1s}   {:8.3f}{:8.3f}{:8.3f}{:6.2f}{:6.2f}          {:>2s}{:2s}"
     # size of solution archive
-    sizeSolutions = 200
+    sizeSolutions = 100
     # number of ants
-    numAnts = 150
+    numAnts = 75
     # parameter self.q
     q = 0.0001
     # standard deviation
