@@ -14,19 +14,19 @@ class Builder( object ):
 		self.experimental = None
 		self.modified = None
 		self.mod = None
-		sequence = raw_input( "- Enter the desired aminoacid sequence or use the default (NLYIQWLKDGGPSSGRPPPS) by pressing 'Enter': " )
+		#sequence = raw_input( "- Enter the desired aminoacid sequence or use the default (NLYIQWLKDGGPSSGRPPPS) by pressing 'Enter': " )
 
-		if len( sequence ) == 0:
-			sequence = "NLYIQWLKDGGPSSGRPPPS"
+		#if len( sequence ) == 0:
+		sequence = "NLYIQWLKDGGPSSGRPPPS"
 
 		if len( sequence ) > 1:
 			fileName = "1L2Y-P.pdb"
 			aminoAcids = AminoAcids( sequence, fileName )
 			#print "OK - The file '1L2Y-P.pdb' with the peptide bonds was generated."
-			name = raw_input( "- Enter the PDB filename to calc the dihedral angles: Phi and Psi, or use the '" + "1L2Y-P.pdb" + "' by pressing 'Enter':" )
+			#name = raw_input( "- Enter the PDB filename to calc the dihedral angles: Phi and Psi, or use the '" + "1L2Y-P.pdb" + "' by pressing 'Enter':" )
 
-			if len( name ) == 0:
-				name = fileName
+			#if len( name ) == 0:
+			name = fileName
 
 			aminoPhiPsi = AminoPhiPsi( name )
 
