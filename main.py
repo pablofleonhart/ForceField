@@ -36,7 +36,7 @@ class Builder( object ):
 			aminoPhiPsi.adjustPhiPsi()
 			print "Phi e Psi", aminoPhiPsi.getPhiPsi()
 			aminoPhiPsi.writeAngles()
-			aminoPhiPsi.plotRamanchandran()
+			#aminoPhiPsi.plotRamanchandran()
 			#print "OK - The file 'aminoPhiPsi.txt' with the dihedral angles by amino acid was generated."
 			#print "OK - The file 'ramachandran.png' with the ramachandran map was generated."
 			aminoPhiPsi.writePDBFile( "1L2Y-P.pdb" )
